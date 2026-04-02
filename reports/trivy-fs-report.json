@@ -1,0 +1,364 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.69.3"
+  },
+  "ReportID": "019d502a-9448-7c37-9458-39c9c838ce13",
+  "CreatedAt": "2026-04-02T22:47:41.000802854+01:00",
+  "ArtifactName": "/home/your/devsecops-pipeline/devsecops-project/juice-shop",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "frontend/src/app/app.guard.spec.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "jwt-token",
+          "Category": "JWT",
+          "Severity": "MEDIUM",
+          "Title": "JWT token",
+          "StartLine": 38,
+          "EndLine": 38,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 36,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 37,
+                "Content": "  it('returns payload from decoding a valid JWT', inject([LoginGuard], (guard: LoginGuard) =\u003e {",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "  it('returns payload from decoding a valid JWT', inject([LoginGuard], (guard: LoginGuard) =\u003e {",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 38,
+                "Content": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 39,
+                "Content": "    expect(guard.tokenDecode()).toEqual({",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "    expect(guard.tokenDecode()).toEqual({",
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+          "Offset": 1466
+        }
+      ]
+    },
+    {
+      "Target": "frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "jwt-token",
+          "Category": "JWT",
+          "Severity": "MEDIUM",
+          "Title": "JWT token",
+          "StartLine": 61,
+          "EndLine": 61,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 59,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 60,
+                "Content": "  xit('should set Last-Login IP from JWT as trusted HTML', () =\u003e { // FIXME Expected state seems to ",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "  xit('should set Last-Login IP from JWT as trusted HTML', () =\u003e { // FIXME Expected state seems to ",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 61,
+                "Content": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 62,
+                "Content": "    component.ngOnInit()",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "    component.ngOnInit()",
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+          "Offset": 2220
+        }
+      ]
+    },
+    {
+      "Target": "juice-shop/frontend/src/app/app.guard.spec.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "jwt-token",
+          "Category": "JWT",
+          "Severity": "MEDIUM",
+          "Title": "JWT token",
+          "StartLine": 38,
+          "EndLine": 38,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 36,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 37,
+                "Content": "  it('returns payload from decoding a valid JWT', inject([LoginGuard], (guard: LoginGuard) =\u003e {",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "  it('returns payload from decoding a valid JWT', inject([LoginGuard], (guard: LoginGuard) =\u003e {",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 38,
+                "Content": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 39,
+                "Content": "    expect(guard.tokenDecode()).toEqual({",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "    expect(guard.tokenDecode()).toEqual({",
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "ocalStorage.setItem('token', '***********************************************************************************************************************************************************')",
+          "Offset": 1466
+        }
+      ]
+    },
+    {
+      "Target": "juice-shop/frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "jwt-token",
+          "Category": "JWT",
+          "Severity": "MEDIUM",
+          "Title": "JWT token",
+          "StartLine": 61,
+          "EndLine": 61,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 59,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 60,
+                "Content": "  xit('should set Last-Login IP from JWT as trusted HTML', () =\u003e { // FIXME Expected state seems to ",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "  xit('should set Last-Login IP from JWT as trusted HTML', () =\u003e { // FIXME Expected state seems to ",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 61,
+                "Content": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 62,
+                "Content": "    component.ngOnInit()",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "    component.ngOnInit()",
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "ocalStorage.setItem('token', '*******************************************************************************************************************************')",
+          "Offset": 2220
+        }
+      ]
+    },
+    {
+      "Target": "juice-shop/lib/insecurity.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "private-key",
+          "Category": "AsymmetricPrivateKey",
+          "Severity": "HIGH",
+          "Title": "Asymmetric Private Key",
+          "StartLine": 23,
+          "EndLine": 23,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 21,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 22,
+                "Content": "export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-publi",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-publi",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 23,
+                "Content": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 24,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+          "Offset": 860
+        }
+      ]
+    },
+    {
+      "Target": "lib/insecurity.ts",
+      "Class": "secret",
+      "Secrets": [
+        {
+          "RuleID": "private-key",
+          "Category": "AsymmetricPrivateKey",
+          "Severity": "HIGH",
+          "Title": "Asymmetric Private Key",
+          "StartLine": 23,
+          "EndLine": 23,
+          "Code": {
+            "Lines": [
+              {
+                "Number": 21,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 22,
+                "Content": "export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-publi",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "export const publicKey = fs ? fs.readFileSync('encryptionkeys/jwt.pub', 'utf8') : 'placeholder-publi",
+                "FirstCause": false,
+                "LastCause": false
+              },
+              {
+                "Number": 23,
+                "Content": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+                "IsCause": true,
+                "Annotation": "",
+                "Truncated": false,
+                "Highlighted": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+                "FirstCause": true,
+                "LastCause": true
+              },
+              {
+                "Number": 24,
+                "Content": "",
+                "IsCause": false,
+                "Annotation": "",
+                "Truncated": false,
+                "FirstCause": false,
+                "LastCause": false
+              }
+            ]
+          },
+          "Match": "----BEGIN RSA PRIVATE KEY-----****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************-----END RSA PRIVATE",
+          "Offset": 860
+        }
+      ]
+    }
+  ]
+}

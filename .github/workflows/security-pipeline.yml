@@ -1,0 +1,80 @@
+# ============================================================
+# DevSecOps Security Pipeline
+# ============================================================
+# This file tells GitHub Actions what to do every time
+# someone pushes code to this repository.
+#
+# It runs on GitHub's servers (not your Pi), completely free.
+# ============================================================
+
+name: DevSecOps Security Pipeline
+# The name that appears in the GitHub Actions tab
+
+on:
+  push:
+    branches: [main]
+    # Trigger this pipeline when code is pushed to the "main" branch
+  pull_request:
+    branches: [main]
+    # Also trigger when someone opens a pull request to "main"
+
+jobs:
+  # A "job" is a set of steps that run on one machine.
+  # Jobs run in the order defined by "needs" (dependencies).
+
+  # ============================================
+  # JOB 1: Software Composition Analysis (SCA)
+  # ============================================
+  sca-scan:
+    name: "SCA — Trivy Dependency Scan"
+    runs-on: ubuntu-latest
+    # This job runs on a fresh Ubuntu virtual machine provided by GitHub
+    # (not on your Pi — GitHub gives you this for free)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        # "Checkout" means: download your repository code onto this
+        # GitHub runner machine so the next steps can access it.
+        # Every job starts with a completely empty machine, so
+        # this step is always needed.
+
+      - name: Run Trivy filesystem scan (human-readable)
+        uses: aquasecurity/trivy-action@master
+        # This uses Trivy's official GitHub Action
+        # (someone packaged Trivy into a reusable Action for us)
+        with:
+          scan-type: 'fs'
+          # "fs" = filesystem scan (scan the source code dependencies)
+          scan-ref: './juice-shop'
+          # Which folder to scan
+          format: 'table'
+          # Human-readable output (visible in the job logs)
+          severity: 'HIGH,CRITICAL'
+          exit-code: '0'
+          # exit-code 0 = don't fail the pipeline even if vulnerabilities
+          # are found. We set this to 0 because Juice Shop is DELIBERATELY
+          # vulnerable — we EXPECT to find problems.
+          # In a real project, you'd set this to '1' to block deployment.
+
+      - name: Run Trivy and save JSON report
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './juice-shop'
+          format: 'json'
+          # JSON format for machine processing
+          output: 'trivy-sca-report.json'
+          # Save to a file instead of printing to screen
+          severity: 'HIGH,CRITICAL'
+
+      - name: Upload SCA report as artifact
+        uses: actions/upload-artifact@v4
+        # "Artifacts" in GitHub Actions = files you want to keep after
+        # the job finishes. Without this, the file disappears when the
+        # runner machine is destroyed.
+        with:
+          name: trivy-sca-report
+          # A label for this artifact
+          path: trivy-sca-report.json
+          # The file to save

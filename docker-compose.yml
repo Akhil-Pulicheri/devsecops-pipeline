@@ -1,0 +1,55 @@
+version: '3.8'
+# The version of the docker-compose file format
+
+services:
+  # "services" is where you define the containers you want to run
+
+  app:
+    # This is our application container
+    build: .
+    # Build from the Dockerfile in the current directory
+    ports:
+      - "3000:3000"
+      # Map port 3000 on your Pi to port 3000 in the container
+    restart: unless-stopped
+    # If the container crashes, restart it automatically
+    # (unless YOU manually stopped it)
+    read_only: true
+    # SECURITY: Make the container's filesystem read-only
+    # The app can't write to disk — this prevents attackers from
+    # dropping malicious files if they break in
+    tmpfs:
+      - /tmp
+      # But the app still needs a temporary folder for scratch work
+      # tmpfs creates a temporary folder in RAM (not on disk)
+      # It gets wiped when the container restarts
+      - /app/data/chatbot:uid=100,gid=101
+      # Juice Shop copies chatbot training data here at startup — needs write access
+      # uid=100,gid=101 matches appuser:appgroup so the non-root user can write to it
+      - /app/ftp:uid=100,gid=101
+      # Juice Shop copies legal.md into ftp/ at startup
+      - /app/i18n:uid=100,gid=101
+      # Juice Shop restores i18n JSON files here at startup
+      - /app/logs:uid=100,gid=101
+      # Juice Shop writes rotating log files here
+    volumes:
+      - juice-data:/app/data
+      # Named volume for the SQLite database (data/juiceshop.sqlite)
+      # Keeps the DB writable and persistent across restarts without
+      # mounting the whole host filesystem into the container
+      - juice-csaf:/app/.well-known/csaf
+      # Named volume (not tmpfs) so Docker pre-populates it from the image,
+      # preserving provider-metadata.json while still allowing writes
+      - juice-frontend:/app/frontend/dist/frontend
+      # Named volume so customizeApplication can write index.html, threejs-demo.html,
+      # owasp_promo.vtt etc. Pre-populated from the image on first run
+    security_opt:
+      - no-new-privileges:true
+      # SECURITY: Prevents processes inside the container from
+      # gaining MORE privileges than they started with
+      # (blocks privilege escalation attacks)
+
+volumes:
+  juice-data:
+  juice-csaf:
+  juice-frontend:
