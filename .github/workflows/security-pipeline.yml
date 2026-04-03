@@ -117,3 +117,118 @@ jobs:
         if: always()
         # "if: always()" means upload the report even if the scan found
         # vulnerabilities and "failed." We want the report regardless.
+  # ============================================
+  # JOB 3: Build Docker Image & Scan It
+  # ============================================
+  build-and-scan:
+    name: "Build Docker Image & Scan"
+    runs-on: ubuntu-latest
+    needs: [sca-scan, sast-scan]
+    # This job waits for BOTH SCA and SAST to finish first
+    # The square brackets mean "all of these must complete"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        # Buildx is Docker's modern build tool. It supports
+        # multi-platform builds and better caching.
+
+      - name: Build Docker image
+        run: |
+          docker build -t devsecops-app:${{ github.sha }} .
+        # ${{ github.sha }} is the unique ID of this specific commit
+        # Using it as the image tag means every build gets a unique name
+        # so you can always trace which code a container was built from.
+        # Example: devsecops-app:a1b2c3d4e5f6...
+
+      - name: Scan built image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'devsecops-app:${{ github.sha }}'
+          format: 'json'
+          output: 'trivy-image-report.json'
+          severity: 'HIGH,CRITICAL'
+
+      - name: Upload image scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-report
+          path: trivy-image-report.json
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        # ${{ secrets.XXXX }} references the GitHub Secrets you set up
+        # These values are never printed in logs
+
+      - name: Push image to Docker Hub
+        run: |
+          docker tag devsecops-app:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/devsecops-app:latest
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devsecops-app:latest
+        # "docker tag" gives the image an additional name that includes
+        # your Docker Hub username (required for pushing)
+        # "docker push" uploads it to Docker Hub so AWS can pull it later
+  # ============================================
+  # JOB 4: Dynamic Application Security Testing (DAST)
+  # ============================================
+  dast-scan:
+    name: "DAST — OWASP ZAP Scan"
+    runs-on: ubuntu-latest
+    needs: build-and-scan
+    # Only runs after the Docker image is built successfully
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and start the application
+        run: |
+          docker build -t devsecops-app:test .
+          docker run -d -p 3000:3000 --name target-app devsecops-app:test
+
+          # Wait for the app to be ready before attacking it
+          echo "Waiting for application to start..."
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000 > /dev/null 2>&1; then
+              echo "App is ready!"
+              break
+            fi
+            echo "  Attempt $i/30 — not ready yet, waiting 2 seconds..."
+            sleep 2
+          done
+        # This loop tries to reach the app every 2 seconds, up to 30 times
+        # (60 seconds total). The app needs a moment to start up.
+        # "curl -s ... > /dev/null 2>&1" silently tries to connect and
+        # throws away output — we only care about the exit code (success/fail)
+
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://localhost:3000'
+          cmd_options: '-J zap-report.json'
+          allow_issue_writing: false
+          # "allow_issue_writing: false" prevents ZAP from automatically
+          # creating GitHub Issues for every finding (you don't want 50
+          # auto-generated issues cluttering your repo)
+
+      - name: Upload ZAP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-dast-report
+          path: |
+            zap-report.json
+            report_html.html
+          # The "|" (pipe) lets you list multiple files
+          # ZAP generates both JSON and HTML reports
+        if: always()
+        # Upload even if ZAP "fails" (finds vulnerabilities)
+
+      - name: Stop the application
+        if: always()
+        run: docker stop target-app && docker rm target-app
+        # Always clean up, even if the scan failed
