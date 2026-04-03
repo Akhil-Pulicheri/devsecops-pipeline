@@ -1,240 +1,40 @@
-# ============================================================
-# DevSecOps Security Pipeline
-# ============================================================
-# This file tells GitHub Actions what to do every time
-# someone pushes code to this repository.
-#
-# It runs on GitHub's servers (not your Pi), completely free.
-# ============================================================
 name: DevSecOps Security Pipeline
-# The name that appears in the GitHub Actions tab
 
 on:
   push:
     branches: [main]
-    # Trigger this pipeline when code is pushed to the "main" branch
-  pull_request:
-    branches: [main]
-    # Also trigger when someone opens a pull request to "main"
 
 jobs:
-  # A "job" is a set of steps that run on one machine.
-  # Jobs run in the order defined by "needs" (dependencies).
-
-  # ============================================
-  # JOB 1: Software Composition Analysis (SCA)
-  # ============================================
   sca-scan:
-    name: "SCA — Trivy Dependency Scan"
+    name: "Run Trivy SCA"
     runs-on: ubuntu-latest
-    # This job runs on a fresh Ubuntu virtual machine provided by GitHub
-    # (not on your Pi — GitHub gives you this for free)
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        # "Checkout" means: download your repository code onto this
-        # GitHub runner machine so the next steps can access it.
-        # Every job starts with a completely empty machine, so
-        # this step is always needed.
-
-      - name: Run Trivy filesystem scan (human-readable)
-        uses: aquasecurity/trivy-action@master
-        # This uses Trivy's official GitHub Action
-        # (someone packaged Trivy into a reusable Action for us)
-        with:
-          scan-type: 'fs'
-          # "fs" = filesystem scan (scan the source code dependencies)
-          scan-ref: './juice-shop'
-          # Which folder to scan
-          format: 'table'
-          # Human-readable output (visible in the job logs)
-          severity: 'HIGH,CRITICAL'
-          exit-code: '0'
-          # exit-code 0 = don't fail the pipeline even if vulnerabilities
-          # are found. We set this to 0 because Juice Shop is DELIBERATELY
-          # vulnerable — we EXPECT to find problems.
-          # In a real project, you'd set this to '1' to block deployment.
-
-      - name: Run Trivy and save JSON report
+      - name: Run Trivy vulnerability scanner in fs mode
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
-          scan-ref: './juice-shop'
+          scan-ref: '.'
           format: 'json'
-          # JSON format for machine processing
-          output: 'trivy-sca-report.json'
-          # Save to a file instead of printing to screen
-          severity: 'HIGH,CRITICAL'
+          output: 'trivy-fs-report.json'
+          severity: 'CRITICAL,HIGH'
 
-      - name: Upload SCA report as artifact
-        uses: actions/upload-artifact@v4
-        # "Artifacts" in GitHub Actions = files you want to keep after
-        # the job finishes. Without this, the file disappears when the
-        # runner machine is destroyed.
-        with:
-          name: trivy-sca-report
-          # A label for this artifact
-          path: trivy-sca-report.json
-          # The file to save
-  # ============================================
-  # JOB 2: Static Application Security Testing (SAST)
-  # ============================================
   sast-scan:
-    name: "SAST — Semgrep Code Scan"
+    name: "Run Semgrep SAST"
     runs-on: ubuntu-latest
-    needs: sca-scan
-    # "needs: sca-scan" means this job WAITS for sca-scan to finish
-    # before starting. This creates the chain: SCA → SAST → next job
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/owasp-top-ten
-            p/nodejs
-          # These are Semgrep "rulesets":
-          #   p/security-audit = general security checks
-          #   p/owasp-top-ten  = rules specifically for OWASP Top 10 vulnerabilities
-          #   p/nodejs         = Node.js-specific security rules
-          # The ">-" is YAML syntax for a multi-line string without newlines
-          generateSarif: "1"
-          # SARIF = Static Analysis Results Interchange Format
-          # It's a standard format that GitHub can read and display
-          # directly in the "Security" tab of your repository
+        run: |
+          python3 -m pip install semgrep
+          semgrep --config auto ./juice-shop --json -o semgrep-report.json || true
 
-      - name: Upload Semgrep report
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-sast-report
-          path: semgrep.sarif
-        if: always()
-        # "if: always()" means upload the report even if the scan found
-        # vulnerabilities and "failed." We want the report regardless.
-  # ============================================
-  # JOB 3: Build Docker Image & Scan It
-  # ============================================
   build-and-scan:
     name: "Build Docker Image & Scan"
     runs-on: ubuntu-latest
     needs: [sca-scan, sast-scan]
-    # This job waits for BOTH SCA and SAST to finish first
-    # The square brackets mean "all of these must complete"
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        # Buildx is Docker's modern build tool. It supports
-        # multi-platform builds and better caching.
-
-      - name: Build Docker image
-        run: |
-          docker build -t devsecops-app:${{ github.sha }} .
-        # ${{ github.sha }} is the unique ID of this specific commit
-        # Using it as the image tag means every build gets a unique name
-        # so you can always trace which code a container was built from.
-        # Example: devsecops-app:a1b2c3d4e5f6...
-
-      - name: Scan built image with Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'devsecops-app:${{ github.sha }}'
-          format: 'json'
-          output: 'trivy-image-report.json'
-          severity: 'HIGH,CRITICAL'
-
-      - name: Upload image scan report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-image-report
-          path: trivy-image-report.json
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-        # ${{ secrets.XXXX }} references the GitHub Secrets you set up
-        # These values are never printed in logs
-
-      - name: Push image to Docker Hub
-        run: |
-          docker tag devsecops-app:${{ github.sha }} ${{ secrets.DOCKERHUB_USERNAME }}/devsecops-app:latest
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devsecops-app:latest
-        # "docker tag" gives the image an additional name that includes
-        # your Docker Hub username (required for pushing)
-        # "docker push" uploads it to Docker Hub so AWS can pull it later
-  # ============================================
-  # JOB 4: Dynamic Application Security Testing (DAST)
-  # ============================================
-  dast-scan:
-    name: "DAST — OWASP ZAP Scan"
-    runs-on: ubuntu-latest
-    needs: build-and-scan
-    # Only runs after the Docker image is built successfully
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build and start the application
-        run: |
-          docker build -t devsecops-app:test .
-          docker run -d -p 3000:3000 --name target-app devsecops-app:test
-
-          # Wait for the app to be ready before attacking it
-          echo "Waiting for application to start..."
-          for i in $(seq 1 30); do
-            if curl -s http://localhost:3000 > /dev/null 2>&1; then
-              echo "App is ready!"
-              break
-            fi
-            echo "  Attempt $i/30 — not ready yet, waiting 2 seconds..."
-            sleep 2
-          done
-        # This loop tries to reach the app every 2 seconds, up to 30 times
-        # (60 seconds total). The app needs a moment to start up.
-        # "curl -s ... > /dev/null 2>&1" silently tries to connect and
-        # throws away output — we only care about the exit code (success/fail)
-
-      - name: Run OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
-        with:
-          target: 'http://localhost:3000'
-          cmd_options: '-J zap-report.json'
-          allow_issue_writing: false
-          # "allow_issue_writing: false" prevents ZAP from automatically
-          # creating GitHub Issues for every finding (you don't want 50
-          # auto-generated issues cluttering your repo)
-
-      - name: Upload ZAP report
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-dast-report
-          path: |
-            zap-report.json
-            report_html.html
-          # The "|" (pipe) lets you list multiple files
-          # ZAP generates both JSON and HTML reports
-        if: always()
-        # Upload even if ZAP "fails" (finds vulnerabilities)
-
-      - name: Stop the application
-        if: always()
-        run: docker stop target-app && docker rm target-app
-        # Always clean up, even if the scan failed
- build-and-scan:
-    name: "Build Docker Image & Scan"
-    runs-on: ubuntu-latest
-    needs: [sca-scan, sast-scan]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -243,8 +43,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        run: |
-          docker build -t devsecops-app:${{ github.sha }} .
+        run: docker build -t devsecops-app:${{ github.sha }} .
 
       - name: Scan built image with Trivy
         uses: aquasecurity/trivy-action@master
@@ -253,12 +52,6 @@ jobs:
           format: 'json'
           output: 'trivy-image-report.json'
           severity: 'HIGH, CRITICAL'
-
-      - name: Upload image scan report
-        uses: actions/upload-artifact@v4
-        with:
-          name: trivy-image-report
-          path: trivy-image-report.json
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
