@@ -6,7 +6,6 @@
 #
 # It runs on GitHub's servers (not your Pi), completely free.
 # ============================================================
-
 name: DevSecOps Security Pipeline
 # The name that appears in the GitHub Actions tab
 
