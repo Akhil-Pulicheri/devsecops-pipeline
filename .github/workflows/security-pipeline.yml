@@ -232,7 +232,7 @@ jobs:
         if: always()
         run: docker stop target-app && docker rm target-app
         # Always clean up, even if the scan failed
-build-and-scan:
+ build-and-scan:
     name: "Build Docker Image & Scan"
     runs-on: ubuntu-latest
     needs: [sca-scan, sast-scan]
